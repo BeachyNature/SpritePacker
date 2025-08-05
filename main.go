@@ -1,15 +1,16 @@
 package main
 
 import (
-	"path/filepath"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
+	"io"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 type SerializedRect struct {
@@ -32,7 +33,7 @@ type SerializedFrame struct {
 }
 
 type SerializedSpritesheet struct {
-	ImageName string
+	Name string `json:"name"`
 	// Frames map[string]SerializedFrame
 	// Meta map[string]interface{}
 }
@@ -64,9 +65,38 @@ func main() {
 			fmt.Printf("Creating spritesheet with name: %s \n", sprite_name)
 			CreateSpritesheet(sprite_name)
 		case 2:
-			//TODO: Implement reading the JSON file to get sprite data
+			// Read the Json file then read the spritesheet
 			fmt.Println("Reading JSON file to get sprite data...")
+			Json("spritesheet.json")
 	}
+}
+
+func Json(path string) {
+	// Open and read the json file
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal("Can't load the json file..")
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		log.Fatalf("Can't load the json file.. %s", err)
+	}
+
+	// Load the formats
+	var format SerializedSpritesheet
+	if err := json.Unmarshal(data, &format); err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s", err)
+	}
+
+	fmt.Printf("JSON: %s", format.Name)
+}
+
+func ReadSpriteSheet(path string) {
+	// Read in the json file
+
+
 }
 
 func CreateSpritesheet(sprite_name string) {
