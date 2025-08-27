@@ -66,8 +66,7 @@ func main() {
 			case 2:
 				// Read the Json file then read the spritesheet
 				fmt.Println("Reading JSON file to get sprite data...")
-				sheet, err := ReadJson("spritesheet.json")
-				if err != nil {log.Fatalf("Error reading json file: %v", err)}
+				sheet := ReadJson("spritesheet.json")
 				fmt.Printf("Sheet: %v", sheet["example"])
 				return
 
@@ -204,11 +203,11 @@ func WriteJson(data map[string] SerializedSpritesheet) error {
 }
 
 // Read the JSON file to get the sprite data
-func ReadJson(path string) (map[string]SerializedSpritesheet, error){
+func ReadJson(path string) map[string]SerializedSpritesheet{
 	file, err := os.ReadFile("spritesheet.json")
 	if err != nil {
 		fmt.Printf("Error reading existing JSON file: %v\n", err)
-		return nil, err
+		return nil
 	}
 
 	// Read json into Spritesheet map
@@ -216,9 +215,9 @@ func ReadJson(path string) (map[string]SerializedSpritesheet, error){
 	err = json.Unmarshal(file, &payload)
 	if err != nil {
 		fmt.Printf("Error unmarshalling JSON data: %v\n", err)
-		return nil, err
+		return nil
 	}
-	return payload, nil
+	return payload
 }
 
 // Open and read an image file
