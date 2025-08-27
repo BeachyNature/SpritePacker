@@ -7,7 +7,6 @@ import (
 	"image"
 	"image/draw"
 	"image/png"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -27,80 +26,65 @@ type SerializedFrame struct {
 	Rotated bool
 	Trimmed bool
 	Frame SerializedRect
-	SpriteSourceSize SerializedRect
-	SourceSize SerializedDim
-	Pivot SerializedPos
 }
 
 type SerializedSpritesheet struct {
-	Name string `json:"name"`
-	// Frames map[string]SerializedFrame
-	// Meta map[string]interface{}
+	Name string
+	Frames map[string] SerializedFrame
 }
 
 func main() {
 
 	// User options to test read sprite or create a new spritesheet
 	var choice int
-	fmt.Println("Welcome to the Sprite Packer!")
-	fmt.Println("1. Create new spritesheet")
-	fmt.Println("2. Read existing spritesheet")
-	fmt.Print("Enter your choice (1 or 2): ")
 
-	_, err := fmt.Scanf("%d\n", &choice)
-	if err != nil {
-		log.Fatalf("Error reading input: %v", err)	
-	}
+	for {
+		fmt.Println("Welcome to the Sprite Packer!")
+		fmt.Println("1. Create new spritesheet")
+		fmt.Println("2. Read existing spritesheet")
+		fmt.Print("Enter your choice (1 or 2): ")
 
-	switch choice {
-		case 1:
-			// Create the spritesheet
-			fmt.Print("Enter the name for the spritesheet (without extension): ")
-			var sprite_name string
-			_, err := fmt.Scanln(&sprite_name)
-			if err != nil {
-				log.Fatalf("Error reading input: %v", err)
-			}
-	
-			fmt.Printf("Creating spritesheet with name: %s \n", sprite_name)
-			CreateSpritesheet(sprite_name)
-		case 2:
-			// Read the Json file then read the spritesheet
-			fmt.Println("Reading JSON file to get sprite data...")
-			Json("spritesheet.json")
+		_, err := fmt.Scanf("%d\n", &choice)
+		if err != nil {
+			log.Fatalf("Error reading input: %v", err)	
+		}
+
+		switch choice {
+			case 1:
+				// Create the spritesheet
+				fmt.Print("Enter the name for the spritesheet (without extension): ")
+				var sprite_name string
+				_, err := fmt.Scanln(&sprite_name)
+				if err != nil {
+					log.Fatalf("Error reading input: %v", err)
+				}
+			
+				fmt.Printf("Creating spritesheet with name: %s \n", sprite_name)
+				CreateSpritesheet(sprite_name)
+				return
+
+			case 2:
+				// Read the Json file then read the spritesheet
+				fmt.Println("Reading JSON file to get sprite data...")
+				sheet, err := ReadJson("spritesheet.json")
+				if err != nil {log.Fatalf("Error reading json file: %v", err)}
+				fmt.Printf("Sheet: %v", sheet["example"])
+				return
+
+			default:
+				fmt.Println("Invalid choice, please run the program again and select 1 or 2.")
+		}
 	}
 }
 
-func Json(path string) {
-	// Open and read the json file
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal("Can't load the json file..")
-	}
-	defer file.Close()
-
-	data, err := io.ReadAll(file)
-	if err != nil {
-		log.Fatalf("Can't load the json file.. %s", err)
-	}
-
-	// Load the formats
-	var format SerializedSpritesheet
-	if err := json.Unmarshal(data, &format); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %s", err)
-	}
-
-	fmt.Printf("JSON: %s", format.Name)
+// Read in the json file
+func ReadSpriteSheet(path string) error {
+	// TODO: Implement reading the spritesheet image and extracting frames based on JSON data
+	return nil
 }
 
-func ReadSpriteSheet(path string) {
-	// Read in the json file
-
-
-}
-
+// Create a new spritesheet from images in the specified directory
 func CreateSpritesheet(sprite_name string) {
-	// Create a new spritesheet from images in the specified directory
 	flagVar := flag.String("path", "images", "Path to the image directory")
 	flag.Parse()
 
@@ -113,7 +97,6 @@ func CreateSpritesheet(sprite_name string) {
 	dir, err := os.ReadDir(*flagVar)
 	if err != nil {panic(err)}
 
-	// TODO: Create the Sprite to pack into
 	offset_x := 0
 	offset_y := 0
 	sprite := image.NewRGBA(image.Rect(0, 0, 1024, 1024))
@@ -123,12 +106,18 @@ func CreateSpritesheet(sprite_name string) {
 	if err != nil {panic(err)}
 
 	// Iterate through the files and read each image
+	sheet := SerializedSpritesheet{
+		Name: sprite_name,
+		Frames: make(map[string]SerializedFrame),
+	}
+
 	for path := range files {
 		img, err := ReadImage(files[path])
 		if err != nil {
 			fmt.Printf("Error reading:  %v:", err)
 			continue
 		}
+		fmt.Printf("Image %d: %s\n", path, files[path])
 
 		// Draw the image onto the sprite at the current offset
 		draw.Draw(
@@ -142,14 +131,38 @@ func CreateSpritesheet(sprite_name string) {
 			img,
 			image.Point{X: 0, Y: 0},
 			draw.Over,
-	)
+		)
 
-		// Update the offsets for the next image
+		// TODO: Add logic to handle wrapping to next row
 		offset_x += img.Bounds().Dx()
 		if offset_x >= sprite.Bounds().Dx() {
 			offset_x = 0
 			offset_y += img.Bounds().Dy()
 		}
+		
+		// Create dicitonary to store frame data
+		var file_name = filepath.Base(files[path])
+		frame_loc := SerializedFrame {
+			Rotated: false,
+			Trimmed: false,
+			Frame: SerializedRect {
+				X: float64(offset_x),
+				Y: float64(offset_y),
+				W: float64(img.Bounds().Dx()),
+				H: float64(img.Bounds().Dy()),
+			},
+		}
+		sheet.Frames[file_name] = frame_loc
+	}
+
+	// Store the sheet into a json with framed values
+	sprite_dict := make(map[string] SerializedSpritesheet)
+	sprite_dict[sprite_name] = sheet
+
+	// Write the JSON file with the sprite data
+	err = WriteJson(sprite_dict)
+	if err != nil {
+		fmt.Printf("Error writing JSON file: %v\n", err)
 	}
 
 	// Save the sprite to a file
@@ -166,50 +179,50 @@ func CreateSpritesheet(sprite_name string) {
 	}
 }
 
-func LoadJson() (SerializedSpritesheet, error) {
-	// TODO: Implement JSON serialization of the sprite data
-	fmt.Println("Creating JSON data for the spritesheet...")
+// Write the JSON file to store the sprite data
+func WriteJson(data map[string] SerializedSpritesheet) error {
 	if _, err := os.Stat("spritesheet.json"); err == nil {
 		fmt.Println("spritesheet.json already exists, loading data...")
-		json_data, err := ReadJson("spritesheet.json")
-		return json_data, err
+		// TODO: Add data to existing file
+		return nil
 	}
 
 	// Create the new json file
 	file, err := os.Create("spritesheet.json")
 	if err != nil {
 		fmt.Printf("Error creating JSON file: %v\n", err)
-		return SerializedSpritesheet{}, err
+		return err
 	}
+	
+	// Encode the data to JSON format
+	enc := json.NewEncoder(file)
+	enc.SetIndent("", " ")
+	enc.Encode(data)
 
-	fmt.Println("JSON file created successfully:", file.Name())
 	defer file.Close()
-
-	// Read the json file to get the sprite data
-	json_data, err := ReadJson("spritesheet.json")
-	return json_data, err
+	return nil
 }
 
-func ReadJson(path string) (SerializedSpritesheet, error) {
-	/// Read the JSON file to get the sprite data
+// Read the JSON file to get the sprite data
+func ReadJson(path string) (map[string]SerializedSpritesheet, error){
 	file, err := os.ReadFile("spritesheet.json")
 	if err != nil {
 		fmt.Printf("Error reading existing JSON file: %v\n", err)
-		return SerializedSpritesheet{}, err
+		return nil, err
 	}
 
-	var payload SerializedSpritesheet
+	// Read json into Spritesheet map
+	var payload map[string]SerializedSpritesheet
 	err = json.Unmarshal(file, &payload)
 	if err != nil {
 		fmt.Printf("Error unmarshalling JSON data: %v\n", err)
-		return SerializedSpritesheet{}, err
+		return nil, err
 	}
 	return payload, nil
 }
 
-
+// Open and read an image file
 func ReadImage(path string) (image.Image, error) {
-	// Read the image
 	fmt.Println("Reading image:", path)
 	file, err := os.Open(path)
 	if err != nil {

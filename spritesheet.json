@@ -1,3 +1,97 @@
 {
-    "name": "spritesheet.png"
+ "example": {
+  "Name": "example",
+  "Frames": {
+   "c_walk_0.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 96,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   },
+   "c_walk_1.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 192,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   },
+   "c_walk_2.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 288,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   },
+   "c_walk_3.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 384,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   },
+   "c_walk_4.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 480,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   },
+   "c_walk_5.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 576,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   },
+   "c_walk_6.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 672,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   },
+   "c_walk_7.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 768,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   },
+   "c_walk_8.png": {
+    "Rotated": false,
+    "Trimmed": false,
+    "Frame": {
+     "X": 864,
+     "Y": 0,
+     "W": 96,
+     "H": 96
+    }
+   }
+  }
+ }
 }
